@@ -100,6 +100,59 @@ Data repeatedly flows through many iterations of these fundamental operations. B
 Although researchers designed the architecture for how these steps work, the specific behavior of the model is an **emergent phenomenon** born from how hundreds of billions of parameters are tuned. This makes it incredibly challenging to look inside the model and determine exactly *why* it makes a specific prediction. 
 
 What we do know is the end result: when you use an LLM to autocomplete a prompt, the words it generates are uncannily fluent, fascinating, and incredibly useful.
+
+## 🧩 Decoding GPT: Generative Pretrained Transformer
+
+You’ve likely heard the acronym **GPT**, but what does it actually mean?
+
+* **Generative:** These are models designed to generate new text.
+* **Pretrained:** The model went through a massive initial learning process over huge swaths of internet data. (The prefix implies there is room to "fine-tune" it later for specific tasks).
+* **Transformer:** This is the core invention underlying the current AI boom. It is a specific, highly efficient type of neural network architecture introduced by Google in 2017. 
+
+Transformers can be built for many things—turning audio into transcripts, text into images (like DALL-E), or, in our case, text into next-word predictions.
+
+### Predict, Sample, Repeat
+At first glance, predicting a single next word feels very different from generating a full, coherent essay. But generation is just a loop:
+1.  **Predict:** The model looks at the initial text and generates a probability distribution for the next word.
+2.  **Sample:** A word is selected from that distribution.
+3.  **Repeat:** That new word is appended to the text, and the whole sequence is fed back into the model to predict the *next* word.
+
+This loop—combined with the massive scale of the model—is what transforms a simple autocomplete tool into a fluent chatbot.
+
 ---
 
-*More sections (like Installation, Usage, and Architecture) will be added as the project progresses.*
+## 🔍 Inside the Transformer: The Data Flow
+
+When a model generates a word, a highly structured sequence of mathematical operations occurs under the hood. Deep learning relies on transforming data into arrays of real numbers (tensors) and processing them through massive matrices of weights.
+
+### 1. Tokens and Word Embeddings
+First, the input text is chopped into smaller pieces called **tokens** (words, parts of words, or characters). The model cannot process text directly, so each token is mapped to a high-dimensional vector—a long list of numbers—using an **Embedding Matrix**. 
+
+* **The Geometry of Meaning:** You can think of these vectors as coordinates in a high-dimensional space (e.g., 12,288 dimensions in GPT-3). As the model trains, it organizes this space so that directions carry semantic meaning. 
+* **Example:** If you take the vector for *King*, subtract the vector for *Man*, and add the vector for *Woman*, the resulting coordinates will land surprisingly close to the vector for *Queen*. The model mathematically learns relationships like gender, plurality, and geography.
+
+### 2. The Attention Block (Context)
+A single word's meaning changes based on context (e.g., a "fashion *model*" vs. a "machine learning *model*"). The vectors pass through an **Attention Block**, which allows them to "talk" to each other. Information is passed back and forth so each vector can update its values to reflect the surrounding context. 
+
+* **Context Window:** The model can only look at a fixed number of tokens at a time (e.g., 2,048 tokens). This is why chatbots can sometimes "lose the thread" of very long conversations.
+
+### 3. The Feed-Forward Layer (Multi-Layer Perceptron)
+After sharing context, the vectors pass through a feed-forward layer. Here, they no longer talk to each other; they are processed in parallel. You can think of this step as the model asking a long list of complex questions about each vector and updating them based on the answers.
+
+This entire process (Attention → Feed-Forward) repeats across many layers until the essential meaning of the entire passage is baked into the very last vector in the sequence.
+
+---
+
+## 🎯 The Final Prediction: Unembedding and Softmax
+
+Once the final vector is fully enriched with context, it's time to make a prediction. 
+
+### Unembedding
+The model uses an **Unembedding Matrix** to map that final, context-rich vector back into a list of numbers—one for every single possible token in its vocabulary (e.g., 50,000 tokens). These raw, unnormalized scores are called **logits**.
+
+### Softmax & Temperature
+Because logits can be negative or wildly large, they aren't useful as probabilities. They are passed through a function called **Softmax**, which normalizes them into a valid probability distribution (all values are between 0 and 1, and they all add up to 1). 
+
+To make the AI's output more dynamic, developers add a variable into the Softmax math called **Temperature**:
+* **Low Temperature (e.g., 0.0):** The model always picks the most likely word. The output is highly predictable, safe, but often generic or repetitive.
+* **High Temperature (e.g., 0.8+):** The distribution is flattened slightly, giving less likely words a fighting chance. The output becomes more creative and original, but if set *too* high, it can quickly degenerate into nonsense.
